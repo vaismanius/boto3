@@ -1,0 +1,2 @@
+* error handling for bucket creation since there is a small chance
+  there is already a bucket with the same name
