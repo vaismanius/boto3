@@ -1,5 +1,6 @@
-import boto3
 import uuid
+import boto3
+
 
 
 def create_bucket_name(bucket_prefix):
@@ -46,6 +47,22 @@ def create_temp_file(size, file_name, file_content):
         f.write(str(file_content) * size)
     return random_file_name
 
+def copy_to_bucket(bucket_from_name, bucket_to_name, file_name):
+    """
+    need to add docstring
+    """
+    copy_source = {
+        'Bucket': bucket_from_name,
+        'Key': file_name
+    }
+    s3_resource.Object(bucket_to_name, file_name).copy(copy_source)
+
+
+                              #                 #
+                             ##                 ##
+                            ###  start of code  ###
+                             ##                 ##
+                              #                 #
 
 
 s3_client = boto3.client('s3')
@@ -53,11 +70,12 @@ s3_resource = boto3.resource('s3')
 
 # creating two buckets, the first with a "client" connection type
 # and the second with a "resource" connection type
+
 first_bucket_name, first_response = create_bucket(
     bucket_prefix='firstpythonbucket', 
     s3_connection=s3_resource.meta.client)
 
-second_bucket_name, second_response = create_bucket(
+second_bucket_name, second_response = create_bucket(      
     bucket_prefix='secondpythonbucket', s3_connection=s3_resource)
 
 
@@ -67,4 +85,17 @@ first_file_name = create_temp_file(300, 'firstfile.txt', 'f')
 first_bucket = s3_resource.Bucket(name=first_bucket_name)
 first_object = s3_resource.Object(
     bucket_name=first_bucket_name, key=first_file_name)
-first_object_again = first_bucket.Object(first_file_name)
+
+first_object.upload_file(first_file_name)
+
+s3_resource.Object(first_bucket_name, first_file_name).download_file(
+    f'/tmp/{first_file_name}')
+
+copy_to_bucket(first_bucket_name, second_bucket_name, first_file_name)
+
+s3_resource.Object(second_bucket_name, first_file_name).delete()
+
+second_file_name = create_temp_file(400, 'secondfile.txt', 's')
+second_object = s3_resource.Object(first_bucket.name, second_file_name)
+second_object.upload_file(second_file_name, ExtraArgs={
+                          'ACL': 'public-read'})
